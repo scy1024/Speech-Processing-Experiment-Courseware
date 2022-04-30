@@ -1,0 +1,153 @@
+ %所用到的函数
+% function frameTime=frame2time(frameNum,framelen,inc,fs)
+% 分帧后计算每帧对应的时间
+% frameTime=(((1:frameNum)-1)*inc+framelen/2)/fs;
+% end
+%--------------------------------------------------------------------
+%画出清音和浊音的短时能量图，进行比较
+clear all;
+[x,fs]=audioread('D:\MYData\voice\sy3\清音f.m4a');         %读取音频
+x=x(:,1);                                                  %提取一个通道
+wlen=960;                                                  %设置窗长
+win=hanning(wlen);                                         %设置海宁窗  
+inc=400;                                                   %设置帧移
+lx=length(x);
+xf=enframe(x,win,inc)';                                    %分帧、加海宁窗    
+fnx=size(xf,2);                                            %帧数
+tx=(0:lx-1)/fs;                
+frametimex=frame2time(fnx,wlen,inc,fs);
+for i=1:fnx
+    xf1=xf(:,i);
+    xe=xf1.*xf1;
+    Enx(i)=sum(xe);
+end
+figure('Name','短时能量','NumberTitle','off');                                          
+subplot(2,2,1);                                            %绘制清音信号时域图
+plot(tx,x,'k');
+axis([0 5 -0.6 0.6]);
+xlabel('时间/s');
+ylabel('幅值');
+title('清音信号时域图');
+grid;
+ 
+subplot(2,2,3);
+plot(frametimex,Enx,'k');                             %绘制清音信号短时能量图
+axis([0 5 0 15]);
+title('清音短时能量');
+xlabel('时间/s');
+ylabel('幅值');
+grid;
+ 
+[y,fs]=audioread('D:\MYData\voice\sy3\浊音b.m4a');       
+y=y(:,1);
+ly=length(y);
+yf=enframe(y,win,inc)';
+fny=size(yf,2);
+ty=(0:ly-1)/fs;
+frametimey=frame2time(fny,wlen,inc,fs);
+for i=1:fny
+    yf1=yf(:,i);
+    ye=yf1.*yf1;
+    Eny(i)=sum(ye);
+end                                         
+subplot(2,2,2);                                      
+plot(ty,y,'k');
+xlabel('时间/s');
+ylabel('幅值');
+title('浊音信号时域图');
+grid;
+ 
+subplot(2,2,4);
+plot(frametimey,Eny,'k');   
+axis([0 5 -0.6 0.6]);
+axis([0 5 0 15]);         
+title('浊音短时能量');
+xlabel('时间/s');
+ylabel('幅值');
+grid;
+%--------------------------------------------------------
+%画出清音和浊音的平均过零率，进行比较
+% 所用到的函数
+% function frameTime=frame2time(frameNum,framelen,inc,fs)
+% % 分帧后计算每帧对应的时间
+% frameTime=(((1:frameNum)-1)*inc+framelen/2)/fs;
+% end
+ 
+clear all;
+[x,fs]=audioread('D:\MYData\voice\sy3\清音f.m4a');     
+x=x(:,1);
+wlen=960;
+win=hanning(wlen);                                           
+inc=400;               
+xx=x-mean(x);
+lxx=length(xx);
+txx=(0:lxx-1)/fs;
+xxf=enframe(xx,win,inc)';                                      
+fnxx=size(xxf,2);
+zcrx=zeros(1,fnxx);
+for i=1:fnxx
+    xxf1=xxf(:,i);
+    for j=1:(wlen-1)
+        if xxf1(j)*xxf1(j+1)<0
+            zcrx(i)=zcrx(i)+1;
+        end
+    end
+end
+txx1=(0:lxx-1)/fs;
+frametimexx=frame2time(fnxx,wlen,inc,fs);
+figure('Name','短时平均过零率','NumberTitle','off');   
+subplot(2,2,1);                                      
+plot(txx,xx,'k');
+axis([0 5 -0.6 0.6]);  
+xlabel('时间/s');
+ylabel('幅值');
+title('清音信号时域图');
+grid;
+ 
+subplot(2,2,3);
+plot(frametimexx,zcrx,'k');   
+axis([0 7 0 350]);        
+title('清音信号短时平均过零率');
+xlabel('时间/s');
+ylabel('幅值');
+grid;
+ 
+ 
+%浊音
+[y,fs]=audioread('D:\MYData\voice\sy3\浊音b.m4a');       
+y=y(:,1);
+yy=y-mean(y);
+lyy=length(yy);
+tyy=(0:lyy-1)/fs;
+yyf=enframe(yy,win,inc)';                                    
+fnyy=size(yyf,2);
+zcry=zeros(1,fnyy);
+for i=1:fnyy
+    yyf1=yyf(:,i);
+    for j=1:(wlen-1)
+        if yyf1(j)*yyf1(j+1)<0
+            zcry(i)=zcry(i)+1;
+        end
+    end
+end
+tyy1=(0:lyy-1)/fs;
+frametimeyy=frame2time(fnyy,wlen,inc,fs);   
+subplot(2,2,2);                                      
+plot(tyy,yy,'k');
+axis([0 5 -0.6 0.6]);  
+xlabel('时间/s');
+ylabel('幅值');
+title('浊音信号时域图');
+grid;
+ 
+subplot(2,2,4);
+plot(frametimeyy,zcry,'k');    
+axis([0 7 0 350]);         
+title('浊音信号短时平均过零率');
+xlabel('时间/s');
+ylabel('幅值');
+grid;
+%---------------------------------------------------------------
+%以一段语音为训练集，利用短时能量和短时过零率两种方法设定阈值，
+%以另一段语音为测试集，得出测试语音的清浊音判断图（单位为帧）。
+
